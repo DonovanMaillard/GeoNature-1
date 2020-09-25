@@ -90,7 +90,7 @@ class MailConfig(Schema):
 
 
 class AccountManagement(Schema):
-    # Config for sign-up
+    # Configuration parameters for sign-up
     ENABLE_SIGN_UP = fields.Boolean(missing=False)
     ENABLE_USER_MANAGEMENT = fields.Boolean(missing=False)
     AUTO_ACCOUNT_CREATION = fields.Boolean(missing=True)
@@ -98,6 +98,10 @@ class AccountManagement(Schema):
     VALIDATOR_EMAIL = EmailStrOrListOfEmailStrField(missing=None)
     ACCOUNT_FORM = fields.List(fields.Dict(), missing=[])
     ADDON_USER_EMAIL = fields.String(missing="")
+
+class PermissionManagement(Schema):
+    # Configuration parameters for permissions managment and access request
+    ENABLE_ACCESS_REQUEST = fields.Boolean(missing=False)
 
 
 class UsersHubConfig(Schema):
@@ -119,9 +123,7 @@ class MetadataConfig(Schema):
     NB_AF_DISPLAYED = fields.Integer(missing=50, validate=OneOf([10, 25, 50, 100]))
 
 
-# class a utiliser pour les paramètres que l'on ne veut pas passer au frontend
-
-
+# Class to use for parameters you NOT want to pass to frontend
 class GnPySchemaConf(Schema):
     SQLALCHEMY_DATABASE_URI = fields.String(
         required=True,
@@ -148,6 +150,7 @@ class GnPySchemaConf(Schema):
     MAIL_CONFIG = fields.Nested(MailConfig, missing=None)
     ADMIN_APPLICATION_LOGIN = fields.String()
     ACCOUNT_MANAGEMENT = fields.Nested(AccountManagement, missing={})
+    PERMISSION_MANAGEMENT = fields.Nested(PermissionManagement, missing={})
     USERSHUB = fields.Nested(UsersHubConfig, missing={})
     SERVER = fields.Nested(ServerConfig, missing={})
     MEDIAS = fields.Nested(MediasConfig, missing={})
@@ -288,7 +291,7 @@ class MapConfig(Schema):
     ZOOM_ON_CLICK = fields.Integer(missing=18)
 
 
-# class a utiliser pour les paramètres que l'on veut passer au frontend
+# Class to use for parameters you WANT to pass to frontend
 class GnGeneralSchemaConf(Schema):
     appName = fields.String(missing="GeoNature2")
     LOGO_STRUCTURE_FILE = fields.String(missing="logo_structure.png")
@@ -313,6 +316,7 @@ class GnGeneralSchemaConf(Schema):
     BDD = fields.Nested(BddConfig, missing=dict())
     URL_USERSHUB = fields.Url(required=False)
     ACCOUNT_MANAGEMENT = fields.Nested(AccountManagement, missing={})
+    PERMISSION_MANAGEMENT = fields.Nested(PermissionManagement, missing={})
     MEDIAS = fields.Nested(MediasConfig, missing={})
     UPLOAD_FOLDER = fields.String(missing="static/medias")
     METADATA = fields.Nested(MetadataConfig, missing={})
