@@ -1,5 +1,4 @@
 <mat-sidenav-container class="sidenav-container">
-
   <mat-sidenav
     class="appnav"
     id="app-sidenav"
@@ -9,7 +8,6 @@
   >
     <pnx-sidenav-items></pnx-sidenav-items>
   </mat-sidenav>
-
 
   <mat-sidenav-content>
     <mat-toolbar id="app-toolbar" class="row">
@@ -33,9 +31,7 @@
       >
 
       <span class="toolbar-spacer"></span>
-      <div>
 
-      </div>
       <span id="appName">
         <h3> {{ appConfig.appName }} </h3>
       </span>
@@ -61,10 +57,7 @@
           {{ currentUser?.user_login }}
         </button>
         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-          <a
-            class="dropdown-item"
-            routerLink="/user"
-          >
+          <a class="dropdown-item" routerLink="/user">
             {{ 'MyAccount' | translate }}
           </a>
         </div>
@@ -84,10 +77,6 @@
           data-toggle="dropdown"
           aria-haspopup="true"
           aria-expanded="false"
-        >language</mat-icon>
-        <div
-          class="dropdown-menu"
-          aria-labelledby="dropdownMenuButton"
         >
           language
         </mat-icon>
@@ -124,13 +113,10 @@
       </button>
     </mat-toolbar>
 
-    </mat-toolbar>
     <div class="app-content">
       <div>
         <router-outlet></router-outlet>
       </div>
-
     </div>
   </mat-sidenav-content>
-
 </mat-sidenav-container>
