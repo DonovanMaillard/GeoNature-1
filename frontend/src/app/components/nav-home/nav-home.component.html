@@ -60,6 +60,13 @@
           <a class="dropdown-item" routerLink="/user">
             {{ 'MyAccount' | translate }}
           </a>
+          <a
+            *ngIf="appConfig.PERMISSION_MANAGEMENT.ENABLE_ACCESS_REQUEST"
+            class="dropdown-item"
+            routerLink="/permissions/access-request"
+          >
+            {{ 'Permissions.accessRequest.link' | translate }}
+          </a>
         </div>
       </ng-container>
 

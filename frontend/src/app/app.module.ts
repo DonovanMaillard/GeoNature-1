@@ -90,7 +90,7 @@ export function createTranslateLoader(http: HttpClient) {
     NewPasswordComponent,
     NavHomeComponent,
     FooterComponent,
-    IntroductionComponent
+    IntroductionComponent,
   ],
   providers: [
     AuthService,
