@@ -32,15 +32,15 @@ COMMENT ON SEQUENCE gn_permissions.cor_requests_permissions_id_request_permissio
     E'Séquence de la clé primaire de la table cor_requests_permissions.' ;
 
 
-
-
 DROP TABLE IF EXISTS gn_permissions.t_requests CASCADE ;
 
 CREATE TABLE gn_permissions.t_requests (
 	id_request integer NOT NULL DEFAULT nextval('gn_permissions.t_requests_id_request_seq'::regclass),
 	id_role integer,
+    token uuid NOT NULL DEFAULT uuid_generate_v4(),
     end_date date,
 	accepted boolean,
+    accepted_date timestamp,
 	additional_data jsonb,
 	meta_create_date timestamp NOT NULL DEFAULT now(),
 	meta_update_date timestamp NOT NULL DEFAULT now(),
@@ -52,10 +52,14 @@ COMMENT ON COLUMN gn_permissions.t_requests.id_request IS
     E'Identifiant auto-incrementé d''une demande de permissions.';
 COMMENT ON COLUMN gn_permissions.t_requests.id_role IS 
 	E'Identifiant de l''utilisateur (=rôle) réalisant la demande de permissions.';
+COMMENT ON COLUMN gn_permissions.t_requests.token IS 
+	E'Jeton de la demande de permissions. Identifie cette demande lors des appels par web service.';
 COMMENT ON COLUMN gn_permissions.t_requests.end_date IS 
 	E'Date de fin des permissions demandées. Null indique une demande de permissions permanente.';
 COMMENT ON COLUMN gn_permissions.t_requests.accepted IS 
 	E'Demande acceptée (=true), demande refusée (=false), demande en attente (=null).';
+COMMENT ON COLUMN gn_permissions.t_requests.end_date IS 
+	E'Date et heure d''acceptation ou refus de la demande. Null indique une demande en attente.';
 COMMENT ON COLUMN gn_permissions.t_requests.additional_data IS 
 	E'Contient des données complémentaires liées à la demande de permissions d''accès. Données du formulaire dynamique. Utiliser un objet JSON.';
 COMMENT ON COLUMN gn_permissions.t_requests.meta_create_date IS 
@@ -75,7 +79,7 @@ CREATE TABLE gn_permissions.cor_requests_permissions (
 	id_action integer,
 	id_object integer,
 	id_filter_type integer,
-	value_filter varchar(250),
+	value_filter varchar(500),
     CONSTRAINT cor_requests_permissions_pk PRIMARY KEY (id_request_permission)
 );
 
@@ -94,11 +98,12 @@ COMMENT ON COLUMN gn_permissions.cor_requests_permissions.id_object IS
 COMMENT ON COLUMN gn_permissions.cor_requests_permissions.id_filter_type IS 
 	E'Identifiant du filtre à appliquer à la permission.';
 COMMENT ON COLUMN gn_permissions.cor_requests_permissions.value_filter IS 
-	E'Peut contenir un id, une chaîne ou un couple clé:valeur en fonction du type de filtre.';
+	E'Peut contenir un id, une liste d''id séparé par des virgules ou une chaîne en fonction du type de filtre.';
 
 -- ALTER TABLE gn_permissions.cor_requests_permissions OWNER TO geonatadmin;
 
-ALTER TABLE gn_permissions.t_requests DROP CONSTRAINT IF EXISTS fk_t_requests_id_role CASCADE;
+ALTER TABLE gn_permissions.t_requests 
+    DROP CONSTRAINT IF EXISTS fk_t_requests_id_role CASCADE ;
 
 ALTER TABLE gn_permissions.t_requests 
     ADD CONSTRAINT fk_t_requests_id_role FOREIGN KEY (id_role)
@@ -150,6 +155,48 @@ ALTER TABLE gn_permissions.cor_requests_permissions
 	REFERENCES gn_permissions.bib_filters_type (id_filter_type) MATCH FULL
 	ON DELETE SET NULL ON UPDATE CASCADE ;
 
+
+-- Triggers
+CREATE OR REPLACE FUNCTION gn_permissions.tri_func_modify_meta_update_date()
+    RETURNS trigger
+    LANGUAGE plpgsql
+AS $function$
+BEGIN
+    NEW.meta_update_date := now();
+    RETURN NEW;
+END;
+$function$ ;
+
+
+DROP TRIGGER IF EXISTS tri_modify_meta_update_date_t_requests 
+    ON gn_permissions.t_requests;
+
+CREATE TRIGGER tri_modify_meta_update_date_t_requests
+    AFTER UPDATE
+    ON gn_permissions.t_requests
+    FOR EACH ROW
+        EXECUTE PROCEDURE gn_permissions.tri_func_modify_meta_update_date();
+
+
+-- Add new Object for Synthese module
+INSERT INTO gn_permissions.t_objects (code_object, description_object) 
+    SELECT
+        'PRIVATE_OBSERVATION',
+        'Observation privée.'
+    WHERE NOT EXISTS (
+        SELECT 'X'
+        FROM gn_permissions.t_objects AS o
+        WHERE o.code_object = 'PRIVATE_OBSERVATION'
+    ) ;
+INSERT INTO gn_permissions.t_objects (code_object, description_object) 
+    SELECT
+        'SENSITIVE_OBSERVATION',
+        'Observation senssible.'
+    WHERE NOT EXISTS (
+        SELECT 'X'
+        FROM gn_permissions.t_objects AS o
+        WHERE o.code_object = 'SENSITIVE_OBSERVATION'
+    ) ;
 
 
 -- Update table 'cor_role_action_filter_module_object' to group permissions,
