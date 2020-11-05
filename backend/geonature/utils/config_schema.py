@@ -12,12 +12,35 @@ from marshmallow import (
     post_load,
 )
 from marshmallow.validate import OneOf, Regexp, Email
+
+
 from geonature.core.gn_synthese.synthese_config import (
     DEFAULT_EXPORT_COLUMNS,
     DEFAULT_LIST_COLUMN,
     DEFAULT_COLUMNS_API_SYNTHESE,
 )
 from geonature.utils.env import GEONATURE_VERSION
+from geonature.utils.utilsmails import clean_recipients
+
+
+class EmailStrOrListOfEmailStrField(fields.Field):
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, str):
+            self._check_email(value)
+            return value
+        elif isinstance(value, list) and all(isinstance(x, str) for x in value):
+            self._check_email(value)
+            return value
+        else:
+            raise ValidationError('Field should be str or list of str')
+    
+    def _check_email(self, value):
+        recipients = clean_recipients(value)
+        for recipient in recipients:
+            email = recipient[1] if isinstance(recipient, tuple) else recipient
+            # Validate email with Marshmallow
+            validator = Email()
+            validator(email)
 
 
 class CasUserSchemaConf(Schema):
@@ -63,7 +86,7 @@ class MailConfig(Schema):
     MAIL_DEFAULT_SENDER = fields.String(missing=None)
     MAIL_MAX_EMAILS = fields.Integer(missing=None)
     MAIL_ASCII_ATTACHMENTS = fields.Boolean(missing=False)
-    ERROR_MAIL_TO = fields.List(fields.String(), missing=list())
+    ERROR_MAIL_TO = EmailStrOrListOfEmailStrField(missing=list())
 
 
 class AccountManagement(Schema):
@@ -72,7 +95,7 @@ class AccountManagement(Schema):
     ENABLE_USER_MANAGEMENT = fields.Boolean(missing=False)
     AUTO_ACCOUNT_CREATION = fields.Boolean(missing=True)
     AUTO_DATASET_CREATION = fields.Boolean(missing=True)
-    VALIDATOR_EMAIL = fields.Email()
+    VALIDATOR_EMAIL = EmailStrOrListOfEmailStrField(missing=None)
     ACCOUNT_FORM = fields.List(fields.Dict(), missing=[])
     ADDON_USER_EMAIL = fields.String(missing="")
 
