@@ -23,6 +23,7 @@ from geonature.utils.env import DB, ROOT_DIR
 from geonature.utils.errors import GeonatureApiError
 
 from geonature.core.gn_meta.models import TDatasets
+from geonature.core.gn_meta.models import CorDatasetActor
 from geonature.core.gn_meta.repositories import get_datasets_cruved
 
 from geonature.core.gn_synthese.models import (
@@ -625,19 +626,21 @@ def general_stats(info_role):
         - nb of distinct observer
         - nb ob datasets
     """
+    #A termes, prévoir un paramètre pour filtrer ou non les données en fonction du cruved
     allowed_datasets = get_datasets_cruved(info_role)
     q = DB.session.query(
         func.count(Synthese.id_synthese),
         func.count(func.distinct(Synthese.cd_nom)),
-        func.count(func.distinct(Synthese.observers)),
-    )
+        func.count(func.distinct(CorDatasetActor.id_organism)), 
+        func.count(func.distinct(Synthese.id_dataset))
+    ).filter(Synthese.id_dataset == CorDatasetActor.id_dataset)
     q = synthese_query.filter_query_with_cruved(Synthese, q, info_role)
     data = q.one()
     data = {
         "nb_data": data[0],
         "nb_species": data[1],
-        "nb_observers": data[2],
-        "nb_dataset": len(allowed_datasets),
+        "nb_actors": data[2],
+        "nb_dataset": data[3]
     }
     return data
 
